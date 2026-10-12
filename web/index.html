@@ -1,0 +1,482 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AgriPredict AI</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+
+    <!-- HEADER -->
+
+    <header>
+
+        <div class="logo">
+            🌾 AgriPredict <span>AI</span>
+        </div>
+
+        <nav>
+
+            <a href="#home">Home</a>
+
+            <a href="#predict">Prediction</a>
+
+            <a href="#disease">Disease Detection</a>
+
+            <a href="#about">About</a>
+
+        </nav>
+
+    </header>
+
+
+
+    <!-- HERO SECTION -->
+
+    <main>
+
+        <section id="home" class="hero">
+
+            <div class="hero-text">
+
+                <p class="tag">
+                    🌱 AGRICULTURE + ARTIFICIAL INTELLIGENCE
+                </p>
+
+                <h1>
+                    Smart Crop Yield
+                    <span>Prediction</span>
+                </h1>
+
+                <p>
+                    Use machine learning to estimate crop yield
+                    based on rainfall, temperature, soil conditions,
+                    fertilizer and farm area.
+                </p>
+
+                <a href="#predict" class="button">
+                    Predict Yield →
+                </a>
+
+            </div>
+
+
+
+            <div class="hero-card">
+
+                <div class="crop-icon">
+                    🌾
+                </div>
+
+                <h3>
+                    AI-Powered Agriculture
+                </h3>
+
+                <p>
+                    Data-driven insights for smarter
+                    farming decisions.
+                </p>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- CROP YIELD PREDICTION -->
+
+        <section id="predict" class="prediction-section">
+
+            <div class="section-heading">
+
+                <p class="tag">
+                    AI PREDICTION
+                </p>
+
+                <h2>
+                    Predict Your Crop Yield
+                </h2>
+
+                <p>
+                    Enter your farm information below.
+                </p>
+
+            </div>
+
+
+
+            <div class="prediction-card">
+
+
+                <div class="form-group">
+
+                    <label>
+                        Crop
+                    </label>
+
+                    <select id="crop">
+
+                        <option value="Rice">
+                            Rice
+                        </option>
+
+                        <option value="Wheat">
+                            Wheat
+                        </option>
+
+                        <option value="Maize">
+                            Maize
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label>
+                        Rainfall (mm)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="rainfall"
+                        value="1200"
+                        min="0"
+                    >
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label>
+                        Temperature (°C)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="temperature"
+                        value="28"
+                    >
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label>
+                        Soil pH
+                    </label>
+
+                    <input
+                        type="number"
+                        id="soil_ph"
+                        value="6.5"
+                        step="0.1"
+                    >
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label>
+                        Fertilizer (kg)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="fertilizer"
+                        value="100"
+                        min="0"
+                    >
+
+                </div>
+
+
+
+                <div class="form-group">
+
+                    <label>
+                        Farm Area (hectares)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="area"
+                        value="2"
+                        min="0"
+                        step="0.1"
+                    >
+
+                </div>
+
+
+
+                <button
+                    onclick="predictYield()"
+                    class="predict-button"
+                >
+
+                    🌾 Predict Crop Yield
+
+                </button>
+
+
+
+                <div
+                    id="result"
+                    class="result hidden"
+                >
+
+                    <p>
+                        Predicted Crop Yield
+                    </p>
+
+                    <h2 id="prediction-value">
+                        --
+                    </h2>
+
+                    <span>
+                        tons
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- CROP DISEASE DETECTION -->
+
+        <section
+            id="disease"
+            class="disease-section"
+        >
+
+            <div class="section-heading">
+
+                <p class="tag">
+                    SECOND ML USE CASE
+                </p>
+
+                <h2>
+                    Crop Disease Detection
+                </h2>
+
+                <p>
+                    Upload a tomato leaf image and let the
+                    trained machine learning model identify
+                    the possible disease.
+                </p>
+
+            </div>
+
+
+
+            <div class="disease-card">
+
+                <div class="disease-icon">
+                    🍃
+                </div>
+
+
+                <div class="disease-content">
+
+                    <h3>
+                        AI Tomato Disease Detection
+                    </h3>
+
+                    <p>
+                        Select a clear image of a tomato leaf.
+                        The trained CNN model will analyse the
+                        image and predict the disease.
+                    </p>
+
+
+
+                    <div class="disease-upload">
+
+                        <label for="disease-image">
+                            📷 Select Tomato Leaf Image
+                        </label>
+
+                        <input
+                            type="file"
+                            id="disease-image"
+                            accept="image/*"
+                        >
+
+
+                        <img
+                            id="disease-preview"
+                            class="disease-preview hidden"
+                            alt="Selected tomato leaf"
+                        >
+
+
+                        <button
+                            type="button"
+                            onclick="predictDisease()"
+                            class="predict-button"
+                        >
+                            🔍 Detect Disease
+                        </button>
+
+                    </div>
+
+
+
+                    <div
+                        id="disease-result"
+                        class="result hidden"
+                    >
+
+                        <p>
+                            Predicted Disease
+                        </p>
+
+                        <h2 id="disease-name">
+                            --
+                        </h2>
+
+                        <span id="disease-confidence">
+                            --
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ABOUT -->
+
+        <section
+            id="about"
+            class="about"
+        >
+
+            <p class="tag">
+                ABOUT THE PROJECT
+            </p>
+
+            <h2>
+                How AgriPredict AI Works
+            </h2>
+
+
+
+            <div class="steps">
+
+
+                <div class="step">
+
+                    <div>
+                        1
+                    </div>
+
+                    <h3>
+                        Enter Data
+                    </h3>
+
+                    <p>
+                        Provide information
+                        about your farm.
+                    </p>
+
+                </div>
+
+
+
+                <div class="step">
+
+                    <div>
+                        2
+                    </div>
+
+                    <h3>
+                        Machine Learning
+                    </h3>
+
+                    <p>
+                        Our trained model
+                        analyses the data.
+                    </p>
+
+                </div>
+
+
+
+                <div class="step">
+
+                    <div>
+                        3
+                    </div>
+
+                    <h3>
+                        Get Prediction
+                    </h3>
+
+                    <p>
+                        Receive an estimated
+                        crop yield.
+                    </p>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        <p>
+            © 2026 AgriPredict AI |
+            Agriculture + Machine Learning
+        </p>
+
+    </footer>
+
+
+
+    <script src="script.js"></script>
+
+
+</body>
+
+</html>
+```
