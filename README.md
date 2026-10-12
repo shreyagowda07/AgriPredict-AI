@@ -1,21 +1,9 @@
----
+# 🌱 AgriPredict-AI
 
-## 🚀 Getting Started
+AgriPredict-AI is an agriculture-focused machine learning project that combines crop yield prediction with tomato leaf disease detection.
 
-### Requirements
-- Python
-- The dependencies listed in `requirements.txt`
-- The trained model files included in the repository
+## 🚀 Project Features
 
-### Run on Windows
-1. Download or clone this repository.
-2. Open the project folder.
-3. Run `Start_AgriPredict.bat`.
-4. Keep the opened terminal windows running.
-5. Open the local application URL shown in the terminal.
-
-### Dataset
-The PlantVillage training dataset is not included in this repository. You need it if you want to retrain the tomato disease detection model.
-
-### Disclaimer
-This project is intended for educational and preliminary agricultural assistance. Predictions should be verified before making farming decisions.
+- 🌾 **Crop Yield Prediction** — Predicts crop yield using agricultural input data and a trained machine learning model.
+- 🍅 **Tomato Disease Detection** — Uses a Convolutional Neural Network (CNN) to classify tomato leaf images into 10 categories.
+- 🧠 **Machine Learning** — Combines machine learning and deep learning techniques for
