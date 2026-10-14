@@ -1,0 +1,11 @@
+venv/
+data/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+.git/
+models/*
+!models/tomato_disease_model_trained.keras
+!models/tomato_class_names_trained.json

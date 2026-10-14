@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriPredict AI | Plant Disease Detection</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f0f7ed;
+            color: #203b28;
+        }
+        header {
+            background: #176b3a;
+            color: white;
+            padding: 24px 16px;
+            text-align: center;
+        }
+        header h1 { margin: 0 0 8px; }
+        main {
+            max-width: 680px;
+            margin: 35px auto;
+            padding: 0 16px;
+        }
+        .panel {
+            background: white;
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 5px 22px #173e2215;
+        }
+        h2 { margin-top: 0; }
+        .upload {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            border: 2px dashed #68a779;
+            border-radius: 10px;
+            background: #f8fcf7;
+            cursor: pointer;
+        }
+        img {
+            display: block;
+            max-width: 100%;
+            max-height: 300px;
+            margin: 20px auto;
+            border-radius: 10px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            border: 0;
+            border-radius: 9px;
+            background: #176b3a;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:disabled { opacity: 0.6; cursor: wait; }
+        #result {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 9px;
+            background: #edf7ee;
+            overflow-wrap: anywhere;
+        }
+        .hidden { display: none; }
+        footer { text-align: center; padding: 20px; color: #58715e; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌿 AgriPredict AI</h1>
+        <p>Tomato Leaf Disease Detection</p>
+    </header>
+
+    <main>
+        <section class="panel">
+            <h2>Check Your Tomato Leaf</h2>
+            <p>Upload a clear photo of a tomato leaf to get an AI prediction.</p>
+
+            <input class="upload" type="file" id="imageInput"
+                   accept="image/*">
+
+            <img id="preview" class="hidden" alt="Selected tomato leaf">
+
+            <button id="predictButton" type="button">Detect Disease</button>
+
+            <div id="result" role="status" aria-live="polite">
+                Your prediction will appear here.
+            </div>
+        </section>
+    </main>
+
+    <footer>AgriPredict AI · Educational disease-classification demo</footer>
+
+    <script>
+        const input = document.getElementById("imageInput");
+        const preview = document.getElementById("preview");
+        const button = document.getElementById("predictButton");
+        const result = document.getElementById("result");
+
+        input.addEventListener("change", () => {
+            const file = input.files[0];
+
+            if (!file) {
+                preview.classList.add("hidden");
+                return;
+            }
+
+            preview.src = URL.createObjectURL(file);
+            preview.classList.remove("hidden");
+            result.textContent = "Image selected. Click Detect Disease.";
+        });
+
+        button.addEventListener("click", async () => {
+            const file = input.files[0];
+
+            if (!file) {
+                result.textContent = "Please select a tomato leaf image first.";
+                return;
+            }
+
+            button.disabled = true;
+            result.textContent = "Analyzing image... Please wait.";
+
+            try {
+                const imageData = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = () => reject(new Error("Could not read image."));
+                    reader.readAsDataURL(file);
+                });
+
+                const response = await fetch(
+                    "http://127.0.0.1:8001/disease_predict",
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ image: imageData })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || "Prediction failed.");
+                }
+
+                result.replaceChildren();
+
+                const heading = document.createElement("h3");
+                heading.textContent = "Prediction: " + data.disease;
+
+                const confidence = document.createElement("p");
+                confidence.textContent = "Model confidence: " +
+                    data.confidence + "%";
+
+                const note = document.createElement("p");
+                note.textContent =
+                    "AI predictions can be incorrect. Confirm disease symptoms before treating the plant.";
+
+                result.append(heading, confidence, note);
+            } catch (error) {
+                result.textContent =
+                    "Could not get prediction. Make sure the API is running in the other CMD window. Details: " +
+                    error.message;
+            } finally {
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
