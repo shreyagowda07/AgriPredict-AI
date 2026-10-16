@@ -5,235 +5,165 @@ import io
 
 import numpy as np
 import tensorflow as tf
-
 from PIL import Image
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
-BASE_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.abspath(__file__)
-    )
-)
+# Project configuration
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MODEL_PATH = os.path.join(
-    BASE_DIR,
-    "models",
-    "tomato_disease_model_trained.keras"
+    BASE_DIR, "models", "tomato_disease_model_v2.keras"
 )
 
 CLASS_FILE = os.path.join(
-    BASE_DIR,
-    "models",
-    "tomato_class_names_trained.json"
+    BASE_DIR, "models", "tomato_class_names_v2.json"
 )
 
-IMG_SIZE = (128, 128)
+IMG_SIZE = (160, 160)
 
 
-print("=" * 60)
-print("       AGRIPREDICT AI")
+# Load the improved model
+print("=" * 55)
+print("          AGRIPREDICT AI")
 print("   TOMATO DISEASE DETECTION API")
-print("=" * 60)
+print("=" * 55)
 
-print("\nLoading model...")
+print("Loading improved model...")
 
-model = tf.keras.models.load_model(
-    MODEL_PATH
-)
+if not os.path.isfile(MODEL_PATH):
+    raise FileNotFoundError(f"Model not found: {MODEL_PATH}")
 
-with open(CLASS_FILE, "r") as file:
+if not os.path.isfile(CLASS_FILE):
+    raise FileNotFoundError(f"Class file not found: {CLASS_FILE}")
+
+model = tf.keras.models.load_model(MODEL_PATH)
+
+with open(CLASS_FILE, "r", encoding="utf-8") as file:
     CLASS_NAMES = json.load(file)
 
-print("Model loaded successfully.")
+if model.output_shape[-1] != len(CLASS_NAMES):
+    raise ValueError("Model output and class names do not match.")
+
+print("Model loaded successfully!")
 print("Number of classes:", len(CLASS_NAMES))
 
 
+# Predict a tomato leaf image
 def predict_image(image):
+    image = image.convert("RGB").resize(IMG_SIZE)
 
-    image = image.convert("RGB")
-    image = image.resize(IMG_SIZE)
+    image_array = np.asarray(image, dtype=np.float32)
+    image_array = np.expand_dims(image_array, axis=0)
 
-    image_array = np.array(
-        image,
-        dtype=np.float32
-    )
+    predictions = model.predict(image_array, verbose=0)[0]
 
-    # Model rescales pixels internally; keep the original 0-255 range
+    index = int(np.argmax(predictions))
+    confidence = float(predictions[index])
 
-    image_array = np.expand_dims(
-        image_array,
-        axis=0
-    )
-
-    predictions = model.predict(
-        image_array,
-        verbose=0
-    )
-
-    predicted_index = int(
-        np.argmax(predictions[0])
-    )
-
-    confidence = float(
-        predictions[0][predicted_index]
-    )
-
-    disease = CLASS_NAMES[predicted_index]
-
-    disease = disease.replace(
-        "Tomato___",
-        ""
-    )
-
-    disease = disease.replace(
-        "_",
-        " "
-    )
+    disease = CLASS_NAMES[index]
+    disease = disease.replace("Tomato___", "").replace("_", " ")
 
     return disease, confidence
 
 
+# API request handler
 class DiseaseHandler(BaseHTTPRequestHandler):
 
     def send_json(self, data, status=200):
-
-        response = json.dumps(
-            data
-        ).encode("utf-8")
+        response = json.dumps(data).encode("utf-8")
 
         self.send_response(status)
-
-        self.send_header(
-            "Content-Type",
-            "application/json"
-        )
-
-        self.send_header(
-            "Access-Control-Allow-Origin",
-            "*"
-        )
-
-        self.send_header(
-            "Access-Control-Allow-Headers",
-            "Content-Type"
-        )
-
-        self.send_header(
-            "Access-Control-Allow-Methods",
-            "POST, OPTIONS"
-        )
-
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.end_headers()
-
-        self.wfile.write(
-            response
-        )
-
+        self.wfile.write(response)
 
     def do_OPTIONS(self):
+        self.send_json({"success": True})
 
-        self.send_json({
-            "success": True
-        })
-
+    def do_GET(self):
+        if self.path in ("/", "/health"):
+            self.send_json({
+                "success": True,
+                "message": "AgriPredict AI API is running",
+                "model": "MobileNetV2",
+                "classes": len(CLASS_NAMES)
+            })
+        else:
+            self.send_json({"success": False, "error": "Endpoint not found"}, 404)
 
     def do_POST(self):
-
         if self.path != "/disease_predict":
-
-            self.send_json({
-                "success": False,
-                "error": "Invalid endpoint"
-            }, 404)
-
+            self.send_json({"success": False, "error": "Invalid endpoint"}, 404)
             return
 
         try:
+            length = int(self.headers.get("Content-Length", "0"))
 
-            content_length = int(
-                self.headers.get(
-                    "Content-Length",
-                    0
-                )
-            )
-
-            body = self.rfile.read(
-                content_length
-            )
-
-            data = json.loads(
-                body.decode("utf-8")
-            )
-
-            image_data = data.get(
-                "image"
-            )
-
-            if not image_data:
-
+            if length <= 0 or length > 15 * 1024 * 1024:
                 self.send_json({
                     "success": False,
-                    "error": "No image provided"
+                    "error": "Invalid request size"
                 }, 400)
+                return
 
+            body = self.rfile.read(length)
+            data = json.loads(body.decode("utf-8"))
+            image_data = data.get("image")
+
+            if not isinstance(image_data, str) or not image_data:
+                self.send_json({
+                    "success": False,
+                    "error": "Please provide an image"
+                }, 400)
                 return
 
             if "," in image_data:
+                image_data = image_data.split(",", 1)[1]
 
-                image_data = image_data.split(
-                    ",",
-                    1
-                )[1]
+            image_bytes = base64.b64decode(image_data, validate=True)
 
-            image_bytes = base64.b64decode(
-                image_data
-            )
+            with Image.open(io.BytesIO(image_bytes)) as uploaded:
+                uploaded.load()
+                image = uploaded.convert("RGB")
 
-            image = Image.open(
-                io.BytesIO(image_bytes)
-            )
-
-            disease, confidence = predict_image(
-                image
-            )
+            disease, confidence = predict_image(image)
 
             self.send_json({
                 "success": True,
                 "disease": disease,
-                "confidence": round(
-                    confidence * 100,
-                    2
-                )
+                "confidence": round(confidence * 100, 2),
+                "message": "Prediction completed"
             })
 
+            print(f"Prediction: {disease} ({confidence * 100:.2f}%)")
+
         except Exception as error:
-
-            print("ERROR:", error)
-
+            print("Prediction error:", error)
             self.send_json({
                 "success": False,
-                "error": str(error)
-            }, 500)
+                "error": "Could not process this image. Please try another."
+            }, 400)
 
 
-HOST = "0.0.0.0"
+# Start the local server
+HOST = "127.0.0.1"
 PORT = int(os.environ.get("PORT", "8001"))
 
-server = HTTPServer(
-    (HOST, PORT),
-    DiseaseHandler
-)
+server = HTTPServer((HOST, PORT), DiseaseHandler)
 
-print("\n" + "=" * 60)
-print("Disease API is running")
-print("=" * 60)
+print()
+print("API is running!")
+print("Health check: http://127.0.0.1:8001/health")
+print("Prediction endpoint: http://127.0.0.1:8001/disease_predict")
+print("Press Ctrl+C to stop the server.")
 
-print("\nURL:")
-print(
-    "http://127.0.0.1:8001/disease_predict"
-)
-
-print("\nWaiting for image predictions...")
-
-server.serve_forever()
+try:
+    server.serve_forever()
+except KeyboardInterrupt:
+    print("\nAPI server stopped.")
+finally:
+    server.server_close()

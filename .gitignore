@@ -5,7 +5,7 @@ __pycache__/
 .env
 .env.*
 !.env.example
-.git/
 models/*
-!models/tomato_disease_model_trained.keras
-!models/tomato_class_names_trained.json
+!models/tomato_disease_model_v2.keras
+!models/tomato_class_names_v2.json
+.git/
